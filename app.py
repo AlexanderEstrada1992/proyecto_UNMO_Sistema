@@ -4,6 +4,7 @@ from Conexion.conexion import obtener_conexion
 
 # Módulos de Semana 14: Seguridad y Autenticación con Flask-Login
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import Usuario
 
 # Mantenemos la persistencia en archivos (Semana 12)
@@ -45,9 +46,9 @@ def login():
         mail = request.form['mail']
         password = request.form['password']
         
-        # Validar en base de datos
+        # Validar en base de datos usando check_password_hash
         usuario = Usuario.get_by_mail(mail)
-        if usuario and usuario.password == password:
+        if usuario and check_password_hash(usuario.password, password):
             login_user(usuario)
             return redirect(url_for('equipos'))
         else:
@@ -69,12 +70,15 @@ def registro():
         if Usuario.get_by_mail(mail):
             return render_template('registro.html', error="Este correo ya se encuentra registrado. Intente Iniciar Sesión.")
             
+        # Encriptar clave antes de guardar
+        hashed_password = generate_password_hash(password)
+        
         # Crear en base de datos MySQL 
         conexion = obtener_conexion()
         cursor = conexion.cursor()
         cursor.execute(
             "INSERT INTO usuarios (nombre, mail, password) VALUES (%s, %s, %s)",
-            (nombre, mail, password)
+            (nombre, mail, hashed_password)
         )
         conexion.commit()
         conexion.close()
@@ -180,9 +184,12 @@ def agregar_usuario():
         nombre = request.form['nombre']
         mail = request.form['mail']
         password = request.form['password']
+        
+        hashed_password = generate_password_hash(password)
+        
         conexion = obtener_conexion()
         cursor = conexion.cursor()
-        cursor.execute("INSERT INTO usuarios (nombre, mail, password) VALUES (%s, %s, %s)", (nombre, mail, password))
+        cursor.execute("INSERT INTO usuarios (nombre, mail, password) VALUES (%s, %s, %s)", (nombre, mail, hashed_password))
         conexion.commit()
         conexion.close()
         return redirect(url_for('usuarios'))
@@ -199,7 +206,13 @@ def editar_usuario(id_usuario):
         nombre = request.form['nombre']
         mail = request.form['mail']
         password = request.form['password']
-        cursor.execute("UPDATE usuarios SET nombre=%s, mail=%s, password=%s WHERE id_usuario=%s", (nombre, mail, password, id_usuario))
+        
+        if password.strip() == "":
+            cursor.execute("UPDATE usuarios SET nombre=%s, mail=%s WHERE id_usuario=%s", (nombre, mail, id_usuario))
+        else:
+            hashed_password = generate_password_hash(password)
+            cursor.execute("UPDATE usuarios SET nombre=%s, mail=%s, password=%s WHERE id_usuario=%s", (nombre, mail, hashed_password, id_usuario))
+            
         conexion.commit()
         conexion.close()
         return redirect(url_for('usuarios'))
