@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return '<h1>Bienvenido al Sistema de Gestión Operativa - UNMO de la Policía Nacional</h1>'
+    return '<h1>Bienvenido al Sistema de Gestión Operativa - UNMO Unidad Nacional de Mantenimiento del Orden de la Policía Nacional del Ecuador</h1>'
 
 @app.route('/servidor/<nombre>')
 def servidor(nombre):
