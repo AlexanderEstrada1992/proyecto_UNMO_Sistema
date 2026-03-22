@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesión - UNMO{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="60" class="mb-2">
+                <h4 class="mb-0">Acceso al Sistema</h4>
+                <small>Gestión Operativa UNMO</small>
+            </div>
+            <div class="card-body p-4">
+                
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <!-- Mostrar mensajes predeterminados de LoginManager -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Correo Institucional</label>
+                        <input type="email" class="form-control" name="mail" placeholder="usuario@unmo.gob.ec" required autofocus>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Iniciar Sesión</button>
+                    
+                    <div class="text-center mt-3">
+                        <small class="text-muted">¿Nuevo oficial del servicio? <a href="{{ url_for('registro') }}" class="text-decoration-none">Registrarse aquí</a>.</small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Registro de Usuario - UNMO{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow border-0">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0">Registro de Oficiales</h4>
+                <small>Únase al panel del Sistema Operativo</small>
+            </div>
+            <div class="card-body p-4">
+                
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('registro') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rango y Nombres Completos</label>
+                        <input type="text" class="form-control" name="nombre" placeholder="Ej. Cabo Juan Pérez" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Correo Institucional (Email)</label>
+                        <input type="email" class="form-control" name="mail" placeholder="juan.perez@unmo.gob.ec" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Contraseña de Seguridad</label>
+                        <input type="password" class="form-control" name="password" required>
+                        <div class="form-text">Esta clave será encriptada en el sistema local.</div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2">Completar Registro</button>
+                    
+                    <div class="text-center mt-3">
+                        <small class="text-muted">¿Ya pertece a la matriz? <a href="{{ url_for('login') }}" class="text-decoration-none text-success">Ir al Login</a>.</small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
