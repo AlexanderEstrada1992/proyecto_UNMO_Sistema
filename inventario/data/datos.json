@@ -1,7 +1,37 @@
 [
     {
-        "id_equipo": "EJEMPLO-INI",
-        "tipo": "Prueba de Archivos",
+        "id_equipo": "EQ-001",
+        "tipo": "Escudo Antidisturbios Policarbonato",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "EQ-002",
+        "tipo": "Casco Táctico con Visor",
+        "estado_operativo": "Bueno",
+        "disponibilidad": "Asignado a Patrulla"
+    },
+    {
+        "id_equipo": "EQ-003",
+        "tipo": "Chaleco Antibalas Nivel III",
+        "estado_operativo": "Requiere Mantenimiento",
+        "disponibilidad": "En Taller"
+    },
+    {
+        "id_equipo": "EQ-004",
+        "tipo": "Bastón PR-24 (Tolete)",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "EQ-005",
+        "tipo": "Máscara Antigás",
+        "estado_operativo": "Bueno",
+        "disponibilidad": "Asignado a Patrulla"
+    },
+    {
+        "id_equipo": "EQ-006",
+        "tipo": "Radio de Comunicación Tetra",
         "estado_operativo": "Óptimo",
         "disponibilidad": "Disponible en Bodega"
     }

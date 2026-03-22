@@ -9,9 +9,84 @@ main {
     flex: 1;
 }
 
+/* Colores institucionales (Azul y Plomo-Plata) */
+.bg-unmo-azul {
+    background-color: #1d3b6a !important;
+    /* Azul policía más suave y moderno */
+}
+
+.text-unmo-plomo {
+    color: #b0b7c6 !important;
+    /* Gris plomo-plata */
+}
+
+.text-unmo-blanco {
+    color: #ffffff !important;
+}
+
 .hero-section {
-    background-color: #e9ecef;
-    padding: 3rem 2rem;
+    background: linear-gradient(135deg, #1d3b6a 0%, #2f5a8f 100%);
+    color: white;
+    padding: 1rem 1rem; /* Súper reducido para que sea un banner compacto */
     border-radius: 0.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-bottom: 4px solid #b0b7c6;
+}
+
+.hero-section h1 {
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-section hr {
+    border-color: #b0b7c6;
+    opacity: 0.6;
+}
+
+/* Para el Navbar */
+.navbar-unmo {
+    background-color: #1d3b6a !important;
+    border-bottom: 3px solid #b0b7c6;
+}
+
+/* Footer institucional */
+.footer-unmo {
+    background-color: #152a4f !important;
+    border-top: 3px solid #b0b7c6;
+}
+
+/* Botones institucionales */
+.btn-unmo-plomo {
+    background-color: #e2e8f0;
+    color: #1d3b6a;
+    font-weight: bold;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-unmo-plomo:hover {
+    background-color: #ffffff;
+    color: #0b2240;
+    box-shadow: 0 4px 8px rgba(255,255,255,0.2);
+}
+
+/* Tarjetas Institucionales (Menú de opciones) */
+.card-unmo-plomo {
+    background-color: #e2e8f0 !important; /* Plomo plata claro para mantener legibilidad */
+    border: 1px solid #b0b7c6;
+    color: #0b2240;
+    transition: transform 0.3s ease;
+}
+
+.card-unmo-plomo:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-unmo-plomo .card-title {
+    color: #1d3b6a;
+    font-weight: bold;
+    border-bottom: 2px solid #b0b7c6;
+    padding-bottom: 0.5rem;
 }

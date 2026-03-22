@@ -1,2 +1,7 @@
 id_equipo,tipo,estado_operativo,disponibilidad
-EJEMPLO-INI,Prueba de Archivos,Óptimo,Disponible en Bodega
+EQ-001,Escudo Antidisturbios Policarbonato,Óptimo,Disponible en Bodega
+EQ-002,Casco Táctico con Visor,Bueno,Asignado a Patrulla
+EQ-003,Chaleco Antibalas Nivel III,Requiere Mantenimiento,En Taller
+EQ-004,Bastón PR-24 (Tolete),Óptimo,Disponible en Bodega
+EQ-005,Máscara Antigás,Bueno,Asignado a Patrulla
+EQ-006,Radio de Comunicación Tetra,Óptimo,Disponible en Bodega

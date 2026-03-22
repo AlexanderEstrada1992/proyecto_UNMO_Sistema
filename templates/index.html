@@ -4,38 +4,47 @@
 
 {% block content %}
 <div class="hero-section text-center">
-    <h1 class="display-4">Bienvenido al Sistema de Gestión Operativa</h1>
-    <p class="lead">Unidad Nacional de Mantenimiento del Orden de la Policía Nacional del Ecuador</p>
-    <hr class="my-4">
-    <p>Gestione servidores policiales, equipos tácticos, servicios operativos y reportes desde un solo lugar.</p>
-    <a class="btn btn-primary btn-lg" href="{{ url_for('servicios') }}" role="button">Ver Servicios Activos</a>
+    <div class="d-flex justify-content-center align-items-center py-2 mb-2 bg-white rounded shadow-sm d-inline-flex px-3" style="max-width: max-content; margin: 0 auto;">
+        <img src="{{ url_for('static', filename='img/escudo_policia.jpeg') }}" width="60" class="me-3" alt="Escudo Policía Nacional">
+        <img src="{{ url_for('static', filename='img/logo_umo.jpeg') }}" width="60" alt="Logo UMO">
+    </div>
+    <h2 class="text-unmo-blanco fw-bold mb-1">Sistema Operativo</h2>
+    <p class="text-unmo-plomo mb-2" style="font-size: 1rem;">Unidad Nacional de Mantenimiento del Orden (UNMO)</p>
+    <hr class="my-2" style="opacity: 0.2">
+    <p class="mb-3 text-light" style="font-size: 0.9rem;">Gestione servidores policiales, equipos tácticos y servicios desde un solo lugar.</p>
+    
+    {% if not current_user.is_authenticated %}
+        <a class="btn btn-unmo-plomo px-4 shadow-sm fw-bold" href="{{ url_for('login') }}" role="button">Ingresar</a>
+    {% else %}
+        <a class="btn btn-unmo-plomo px-4 shadow-sm fw-bold" href="{{ url_for('equipos') }}" role="button">Ir a mi Panel</a>
+    {% endif %}
 </div>
 
 <div class="row">
     <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
+        <div class="card mb-4 shadow-sm card-unmo-plomo">
             <div class="card-body">
                 <h5 class="card-title">Equipos Tácticos</h5>
                 <p class="card-text">Revise la disponibilidad y el estado operativo de nuestros equipos tácticos y de mantenimiento.</p>
-                <a href="{{ url_for('equipos') }}" class="btn btn-outline-secondary">Ir a Equipos</a>
+                <a href="{{ url_for('equipos') }}" class="btn btn-primary bg-unmo-azul border-0">Ir a Equipos</a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
+        <div class="card mb-4 shadow-sm card-unmo-plomo">
             <div class="card-body">
                 <h5 class="card-title">Servicios Operativos</h5>
                 <p class="card-text">Consulte los eventos, lugares de despliegue y personal participante en las misiones.</p>
-                <a href="{{ url_for('servicios') }}" class="btn btn-outline-secondary">Ir a Servicios</a>
+                <a href="{{ url_for('servicios') }}" class="btn btn-primary bg-unmo-azul border-0">Ir a Servicios</a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
+        <div class="card mb-4 shadow-sm card-unmo-plomo">
             <div class="card-body">
                 <h5 class="card-title">Acerca del Sistema</h5>
                 <p class="card-text">Conozca más sobre los objetivos y la estructura de la UNMO.</p>
-                <a href="{{ url_for('about') }}" class="btn btn-outline-secondary">Más información</a>
+                <a href="{{ url_for('about') }}" class="btn btn-primary bg-unmo-azul border-0">Más información</a>
             </div>
         </div>
     </div>
