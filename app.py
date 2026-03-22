@@ -1,22 +1,11 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for
+from Conexion.conexion import obtener_conexion
 
-# Nuevas importaciones para Persistencia Avanzada (Semana 12)
-from inventario.bd import db, EquipoTactico
+# Mantenemos la persistencia en archivos (Semana 12)
 from inventario.inventario import guardar_persistencia_archivos, leer_txt, leer_json, leer_csv
 
 app = Flask(__name__)
-
-# Configuración de SQLite con SQLAlchemy (ORM)
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'unmo.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db.init_app(app)
-
-# Crear tablas en SQLite si no existen
-with app.app_context():
-    db.create_all()
 
 @app.route('/')
 def index():
@@ -26,12 +15,14 @@ def index():
 def about():
     return render_template('about.html')
 
-# === RUTAS CRUD PARA EQUIPOS (PERSISTENCIA DUAL: ORM + ARCHIVOS) ===
-
+# === RUTAS CRUD MYSQL: EQUIPOS TÁCTICOS ===
 @app.route('/equipos')
 def equipos():
-    # Lectura usando SQLAlchemy ORM
-    lista_equipos = EquipoTactico.query.all()
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT * FROM equipos")
+    lista_equipos = cursor.fetchall()
+    conexion.close()
     return render_template('equipos.html', equipos=lista_equipos)
 
 @app.route('/equipos/agregar', methods=['GET', 'POST'])
@@ -42,51 +33,124 @@ def agregar_equipo():
         estado = request.form['estado']
         disponibilidad = request.form['disponibilidad']
         
-        # 1. Guardar en SQLite vía SQLAlchemy ORM
-        nuevo_equipo = EquipoTactico(
-            id_equipo=id_equipo, 
-            tipo=tipo, 
-            estado_operativo=estado, 
-            disponibilidad=disponibilidad
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        cursor.execute(
+            "INSERT INTO equipos (id_equipo, tipo, estado_operativo, disponibilidad) VALUES (%s, %s, %s, %s)",
+            (id_equipo, tipo, estado, disponibilidad)
         )
-        db.session.add(nuevo_equipo)
-        db.session.commit()
+        conexion.commit()
+        conexion.close()
         
-        # 2. Guardar en TXT, JSON, CSV
-        guardar_persistencia_archivos(nuevo_equipo.to_dict())
+        # Persistencia en archivos simultánea
+        equipo_dict = {"id_equipo": id_equipo, "tipo": tipo, "estado_operativo": estado, "disponibilidad": disponibilidad}
+        guardar_persistencia_archivos(equipo_dict)
         
         return redirect(url_for('equipos'))
-        
     return render_template('formulario_equipo.html', equipo=None)
 
 @app.route('/equipos/editar/<id_equipo>', methods=['GET', 'POST'])
 def editar_equipo(id_equipo):
-    equipo_actual = EquipoTactico.query.get(id_equipo)
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT * FROM equipos WHERE id_equipo = %s", (id_equipo,))
+    equipo_actual = cursor.fetchone()
+    
     if not equipo_actual:
+        conexion.close()
         return redirect(url_for('equipos'))
         
     if request.method == 'POST':
-        equipo_actual.tipo = request.form['tipo']
-        equipo_actual.estado_operativo = request.form['estado']
-        equipo_actual.disponibilidad = request.form['disponibilidad']
+        tipo = request.form['tipo']
+        estado = request.form['estado']
+        disponibilidad = request.form['disponibilidad']
         
-        db.session.commit()
-        # Se guarda el log de actualización en los archivos planos secuenciales
-        guardar_persistencia_archivos(equipo_actual.to_dict())
+        cursor.execute(
+            "UPDATE equipos SET tipo=%s, estado_operativo=%s, disponibilidad=%s WHERE id_equipo=%s",
+            (tipo, estado, disponibilidad, id_equipo)
+        )
+        conexion.commit()
+        conexion.close()
+        
+        # Guardar historial simple en archivos
+        equipo_dict = {"id_equipo": id_equipo, "tipo": tipo, "estado_operativo": estado, "disponibilidad": disponibilidad}
+        guardar_persistencia_archivos(equipo_dict)
         
         return redirect(url_for('equipos'))
         
+    conexion.close()
     return render_template('formulario_equipo.html', equipo=equipo_actual)
 
 @app.route('/equipos/eliminar/<id_equipo>')
 def eliminar_equipo(id_equipo):
-    equipo = EquipoTactico.query.get(id_equipo)
-    if equipo:
-        db.session.delete(equipo)
-        db.session.commit()
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM equipos WHERE id_equipo = %s", (id_equipo,))
+    conexion.commit()
+    conexion.close()
     return redirect(url_for('equipos'))
 
-# === NUEVA RUTA SEMANA 12: LEER DATA DE ARCHIVOS PLANOS ===
+# === RUTAS CRUD MYSQL: USUARIOS (NUEVO SEMANA 13) ===
+@app.route('/usuarios')
+def usuarios():
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT * FROM usuarios")
+    lista_usuarios = cursor.fetchall()
+    conexion.close()
+    return render_template('usuarios.html', usuarios=lista_usuarios)
+
+@app.route('/usuarios/agregar', methods=['GET', 'POST'])
+def agregar_usuario():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        mail = request.form['mail']
+        password = request.form['password']
+        
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, mail, password) VALUES (%s, %s, %s)",
+            (nombre, mail, password)
+        )
+        conexion.commit()
+        conexion.close()
+        return redirect(url_for('usuarios'))
+    return render_template('formulario_usuario.html', usuario=None)
+
+@app.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
+def editar_usuario(id_usuario):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE id_usuario = %s", (id_usuario,))
+    usuario_actual = cursor.fetchone()
+    
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        mail = request.form['mail']
+        password = request.form['password']
+        
+        cursor.execute(
+            "UPDATE usuarios SET nombre=%s, mail=%s, password=%s WHERE id_usuario=%s",
+            (nombre, mail, password, id_usuario)
+        )
+        conexion.commit()
+        conexion.close()
+        return redirect(url_for('usuarios'))
+        
+    conexion.close()
+    return render_template('formulario_usuario.html', usuario=usuario_actual)
+
+@app.route('/usuarios/eliminar/<int:id_usuario>')
+def eliminar_usuario(id_usuario):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM usuarios WHERE id_usuario = %s", (id_usuario,))
+    conexion.commit()
+    conexion.close()
+    return redirect(url_for('usuarios'))
+
+# === RUTAS SECUNDARIAS ===
 @app.route('/datos')
 def datos():
     datos_txt = leer_txt()
@@ -94,7 +158,6 @@ def datos():
     datos_csv = leer_csv()
     return render_template('datos.html', datos_txt=datos_txt, datos_json=datos_json, datos_csv=datos_csv)
 
-# === RUTAS SECUNDARIAS ===
 @app.route('/servicios')
 def servicios():
     return render_template('servicios.html')
