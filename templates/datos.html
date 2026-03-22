@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Datos Persistentes - UNMO{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Lectura de Archivos Locales (TXT, JSON, CSV)</h2>
+    <p class="text-muted">A continuación se muestran los datos guardados mediante persistencia de archivos locales, paralela a la base de datos SQLAlchemy.</p>
+
+    <!-- Pestañas para cada formato de archivo -->
+    <ul class="nav nav-tabs" id="archivosTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-success" id="json-tab" data-bs-toggle="tab" data-bs-target="#json-content" type="button" role="tab">Datos JSON</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-primary" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv-content" type="button" role="tab">Datos CSV</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-secondary" id="txt-tab" data-bs-toggle="tab" data-bs-target="#txt-content" type="button" role="tab">Datos TXT</button>
+        </li>
+    </ul>
+
+    <!-- Contenidos de las pestañas -->
+    <div class="tab-content border border-top-0 p-3 bg-white" id="archivosTabContent">
+        
+        <!-- Contenido JSON -->
+        <div class="tab-pane fade show active" id="json-content" role="tabpanel">
+            <h5>Lectura desde <code>datos.json</code></h5>
+            {% if datos_json %}
+                <pre class="bg-light p-3 rounded text-dark" style="max-height: 400px; overflow-y: auto;">{{ datos_json|tojson(indent=4) }}</pre>
+            {% else %}
+                <div class="alert alert-warning">Aún no hay datos guardados en JSON. Agrega un equipo primero.</div>
+            {% endif %}
+        </div>
+        
+        <!-- Contenido CSV -->
+        <div class="tab-pane fade" id="csv-content" role="tabpanel">
+            <h5>Lectura desde <code>datos.csv</code></h5>
+            {% if datos_csv %}
+                <table class="table table-bordered table-sm mt-3">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID Equipo</th>
+                            <th>Tipo</th>
+                            <th>Estado Operativo</th>
+                            <th>Disponibilidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in datos_csv %}
+                        <tr>
+                            <td>{{ fila.id_equipo }}</td>
+                            <td>{{ fila.tipo }}</td>
+                            <td>{{ fila.estado_operativo }}</td>
+                            <td>{{ fila.disponibilidad }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="alert alert-warning">Aún no hay datos guardados en CSV. Agrega un equipo primero.</div>
+            {% endif %}
+        </div>
+
+        <!-- Contenido TXT -->
+        <div class="tab-pane fade" id="txt-content" role="tabpanel">
+            <h5>Lectura desde <code>datos.txt</code></h5>
+            {% if datos_txt %}
+                <div class="bg-dark text-light p-3 rounded" style="font-family: monospace; max-height: 400px; overflow-y: auto;">
+                    {% for linea in datos_txt %}
+                        {{ linea }}<br>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning">Aún no hay datos guardados en TXT. Agrega un equipo primero.</div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
