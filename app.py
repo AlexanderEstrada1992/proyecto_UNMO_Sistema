@@ -2,15 +2,14 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# Ruta principal solicitada en la tarea
 @app.route('/')
-def inicio():
-    return "Bienvenido al Sistema Operativo UNMO"
+def index():
+    return '<h1>Bienvenido al Sistema de Gestión Operativa - UNMO de la Policía Nacional</h1>'
 
-# Ruta dinámica solicitada en la tarea
-@app.route('/usuario/<nombre>')
-def usuario(nombre):
-    return f"Bienvenido, {nombre}. Tu usuario en el Sistema UNMO está activo."
+@app.route('/servidor/<nombre>')
+def servidor(nombre):
+    # Ruta dinámica ajustada al modelo conceptual del sistema UNMO
+    return f'<h2>Bienvenido servidor policial {nombre}. Su asignación de servicio está confirmada.</h2>'
 
 if __name__ == '__main__':
     app.run(debug=True)
