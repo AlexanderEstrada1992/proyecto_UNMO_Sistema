@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if equipo %}Editar Equipo{% else %}Nuevo Equipo{% endif %} - UNMO
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center">
+    <div class="card shadow mt-4" style="width: 50%;">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">
+                {% if equipo %}Editar Equipo ({{ equipo.id_equipo }}){% else %}Agregar Nuevo Equipo{% endif %}
+            </h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                
+                <div class="mb-3">
+                    <label class="form-label">ID Único de Equipo</label>
+                    <input type="text" class="form-control" name="id_equipo" 
+                           value="{% if equipo %}{{ equipo.id_equipo }}{% endif %}" 
+                           {% if equipo %}readonly{% endif %} required>
+                    {% if equipo %}<div class="form-text text-danger">El ID no se puede modificar.</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Equipo</label>
+                    <input type="text" class="form-control" name="tipo" 
+                           value="{% if equipo %}{{ equipo.tipo }}{% endif %}" required
+                           placeholder="Ej. Armamento Antidisturbios">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Estado Operativo</label>
+                    <select class="form-select" name="estado" required>
+                        <option value="Óptimo" {% if equipo and equipo.estado_operativo == 'Óptimo' %}selected{% endif %}>Óptimo</option>
+                        <option value="Requiere Mantenimiento" {% if equipo and equipo.estado_operativo == 'Requiere Mantenimiento' %}selected{% endif %}>Requiere Mantenimiento</option>
+                        <option value="Inoperativo" {% if equipo and equipo.estado_operativo == 'Inoperativo' %}selected{% endif %}>Inoperativo</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Disponibilidad</label>
+                    <select class="form-select" name="disponibilidad" required>
+                        <option value="Disponible en Bodega" {% if equipo and equipo.disponibilidad == 'Disponible en Bodega' %}selected{% endif %}>Disponible en Bodega</option>
+                        <option value="Asignado a Servicio" {% if equipo and equipo.disponibilidad == 'Asignado a Servicio' %}selected{% endif %}>Asignado a Servicio</option>
+                        <option value="En Taller" {% if equipo and equipo.disponibilidad == 'En Taller' %}selected{% endif %}>En Taller</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('equipos') }}" class="btn btn-secondary">Cancelar y Volver</a>
+                    <button type="submit" class="btn btn-success">
+                        {% if equipo %}Guardar Cambios{% else %}Registrar Equipo{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
