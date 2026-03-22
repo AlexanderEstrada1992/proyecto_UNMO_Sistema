@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - UNMO{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <h1 class="display-4">Bienvenido al Sistema de Gestión Operativa</h1>
+    <p class="lead">Unidad Nacional de Mantenimiento del Orden de la Policía Nacional del Ecuador</p>
+    <hr class="my-4">
+    <p>Gestione servidores policiales, equipos tácticos, servicios operativos y reportes desde un solo lugar.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('servicios') }}" role="button">Ver Servicios Activos</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Equipos Tácticos</h5>
+                <p class="card-text">Revise la disponibilidad y el estado operativo de nuestros equipos tácticos y de mantenimiento.</p>
+                <a href="{{ url_for('equipos') }}" class="btn btn-outline-secondary">Ir a Equipos</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Servicios Operativos</h5>
+                <p class="card-text">Consulte los eventos, lugares de despliegue y personal participante en las misiones.</p>
+                <a href="{{ url_for('servicios') }}" class="btn btn-outline-secondary">Ir a Servicios</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Acerca del Sistema</h5>
+                <p class="card-text">Conozca más sobre los objetivos y la estructura de la UNMO.</p>
+                <a href="{{ url_for('about') }}" class="btn btn-outline-secondary">Más información</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

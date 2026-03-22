@@ -1,15 +1,26 @@
-from flask import Flask
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return '<h1>Bienvenido al Sistema de Gestión Operativa - UNMO Unidad Nacional de Mantenimiento del Orden de la Policía Nacional del Ecuador</h1>'
+    return render_template('index.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/equipos')
+def equipos():
+    return render_template('equipos.html')
+
+@app.route('/servicios')
+def servicios():
+    return render_template('servicios.html')
 
 @app.route('/servidor/<nombre>')
 def servidor(nombre):
-    # Ruta dinámica ajustada al modelo conceptual del sistema UNMO
-    return f'<h2>Bienvenido servidor policial {nombre}. Su asignación de servicio está confirmada.</h2>'
+    return render_template('servidor.html', nombre=nombre)
 
 if __name__ == '__main__':
     app.run(debug=True)

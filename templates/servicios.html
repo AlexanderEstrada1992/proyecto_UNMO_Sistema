@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Servicios Operativos - UNMO{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Servicios Operativos Activos</h2>
+    
+    <div class="row">
+        <!-- Servicio 1 -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    Control de Orden Público - Evento Masivo
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Estadio Olímpico Atahualpa</h5>
+                    <p class="card-text">
+                        <strong>Fecha:</strong> 22/03/2026 <br>
+                        <strong>Hora:</strong> 15:00 - 22:00 <br>
+                        <strong>Personal Asignado:</strong> 50 servidores
+                    </p>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver Reporte</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Servicio 2 -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    Patrullaje Focalizado
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Sector Sur - Mercado Mayorista</h5>
+                    <p class="card-text">
+                        <strong>Fecha:</strong> 23/03/2026 <br>
+                        <strong>Hora:</strong> 06:00 - 14:00 <br>
+                        <strong>Personal Asignado:</strong> 25 servidores
+                    </p>
+                    <a href="#" class="btn btn-sm btn-outline-warning">Ver Reporte</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

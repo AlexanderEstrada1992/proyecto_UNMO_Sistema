@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil de Servidor - UNMO{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center mt-5">
+    <div class="card shadow" style="max-width: 500px;">
+        <div class="card-header bg-dark text-white text-center">
+            <h3>Perfil del Servidor Policial</h3>
+        </div>
+        <div class="card-body text-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Perfil" width="100" class="mb-3">
+            <h4 class="card-title">Bienvenido, {{ nombre }}</h4>
+            <p class="card-text text-muted">
+                Su acceso al Sistema de Gestión Operativa UNMO ha sido verificado satisfactoriamente.
+            </p>
+            <hr>
+            <p class="card-text">
+                Por favor, revise su equipo táctico asignado antes de dirigirse al lugar de despliegue correspondiente en la interfaz de <strong>Servicios Operativos</strong>.
+            </p>
+            <a href="{{ url_for('servicios') }}" class="btn btn-success w-100 mt-2">Revisar mis Servicios</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

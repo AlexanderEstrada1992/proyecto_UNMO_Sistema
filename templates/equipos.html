@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Equipos Tácticos - UNMO{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Equipos Tácticos de la Unidad</h2>
+    <p>Listado de equipos tácticos registrados y su disponibilidad actual.</p>
+    
+    <table class="table table-striped table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>ID Equipo</th>
+                <th>Tipo</th>
+                <th>Estado Operativo</th>
+                <th>Disponibilidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>EQ-001</td>
+                <td>Armamento Antidisturbios</td>
+                <td><span class="badge bg-success">Óptimo</span></td>
+                <td>Asignado</td>
+            </tr>
+            <tr>
+                <td>EQ-002</td>
+                <td>Equipo de Protección Personal</td>
+                <td><span class="badge bg-warning text-dark">Requiere Mantenimiento</span></td>
+                <td>Disponible</td>
+            </tr>
+            <tr>
+                <td>EQ-003</td>
+                <td>Vehículo Táctico Blindado</td>
+                <td><span class="badge bg-success">Óptimo</span></td>
+                <td>En Misión</td>
+            </tr>
+            <tr>
+                <td>EQ-004</td>
+                <td>Comunicaciones Móviles</td>
+                <td><span class="badge bg-danger">Inoperativo</span></td>
+                <td>Taller</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
