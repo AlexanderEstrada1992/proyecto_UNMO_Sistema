@@ -7,7 +7,7 @@ def obtener_conexion():
     """
     host = 'localhost'
     usuario = 'root'
-    password = ''  # PON TU CONTRASEÑA AQUÍ SI TIENES UNA EN MYSQL WORKBENCH
+    password = '123456'
     base_de_datos = 'unmo_db'
     
     conexion = pymysql.connect(
