@@ -21,4 +21,15 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 -- 4. Inserción de un usuario de prueba (Opcional)
-INSERT INTO usuarios (nombre, mail, password) VALUES ('Administrador UNMO', 'admin@unmo.gob.ec', '123456');
+INSERT IGNORE INTO usuarios (nombre, mail, password) VALUES ('Administrador UNMO', 'admin@unmo.gob.ec', '123456');
+
+-- 5. Crear tabla de Asignaciones para relacionar equipos con usuarios
+CREATE TABLE IF NOT EXISTS asignaciones (
+    id_asignacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_equipo VARCHAR(50) NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_asignacion DATE NOT NULL,
+    observaciones TEXT,
+    FOREIGN KEY (id_equipo) REFERENCES equipos(id_equipo) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
