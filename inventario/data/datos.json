@@ -34,5 +34,71 @@
         "tipo": "Radio de Comunicación Tetra",
         "estado_operativo": "Óptimo",
         "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "Chaleco 5.56 - 001",
+        "tipo": "Chalecho antibalas para fusil",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "Chaleco 5.56 - 001",
+        "tipo": "Chalecho antibalas para fusil 5.56",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "007",
+        "tipo": "Pistola eléctrica",
+        "estado_operativo": "Requiere Mantenimiento",
+        "disponibilidad": "En Taller"
+    },
+    {
+        "id_equipo": "007",
+        "tipo": "Pistola eléctrica (spark)",
+        "estado_operativo": "Requiere Mantenimiento",
+        "disponibilidad": "En Taller"
+    },
+    {
+        "id_equipo": "EQ-008",
+        "tipo": "Guantes Tácticos",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "007",
+        "tipo": "Pistola eléctrica (spark)",
+        "estado_operativo": "Inoperativo",
+        "disponibilidad": "En Taller"
+    },
+    {
+        "id_equipo": "EQ-009",
+        "tipo": "Pistola",
+        "estado_operativo": "Inoperativo",
+        "disponibilidad": "En Taller"
+    },
+    {
+        "id_equipo": "EQ-009",
+        "tipo": "Pistola",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "EQ-002",
+        "tipo": "Casco Táctico con Visor transparente",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
+    },
+    {
+        "id_equipo": "EQ-010",
+        "tipo": "Motocicleta",
+        "estado_operativo": "Requiere Mantenimiento",
+        "disponibilidad": "En Taller"
+    },
+    {
+        "id_equipo": "EQ-010",
+        "tipo": "Motocicleta",
+        "estado_operativo": "Óptimo",
+        "disponibilidad": "Disponible en Bodega"
     }
 ]

@@ -3,10 +3,15 @@ from models.equipo import Equipo
 
 class EquipoService:
     @staticmethod
-    def obtener_todos():
+    def obtener_todos(search_query=None):
         conexion = obtener_conexion()
         cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM equipos")
+        if search_query:
+            query = "SELECT * FROM equipos WHERE activo = 1 AND (id_equipo LIKE %s OR tipo LIKE %s)"
+            like_term = f"%{search_query}%"
+            cursor.execute(query, (like_term, like_term))
+        else:
+            cursor.execute("SELECT * FROM equipos WHERE activo = 1")
         filas = cursor.fetchall()
         conexion.close()
         return [Equipo(**fila) for fila in filas] if filas else []
@@ -46,6 +51,16 @@ class EquipoService:
     def eliminar(id_equipo):
         conexion = obtener_conexion()
         cursor = conexion.cursor()
-        cursor.execute("DELETE FROM equipos WHERE id_equipo = %s", (id_equipo,))
+        
+        # Validar si tiene asignaciones
+        cursor.execute("SELECT COUNT(*) as count FROM asignaciones WHERE id_equipo = %s", (id_equipo,))
+        resultado = cursor.fetchone()
+        
+        if resultado and resultado['count'] > 0:
+            conexion.close()
+            return False # No se puede eliminar por integridad referencial
+            
+        cursor.execute("UPDATE equipos SET activo = 0 WHERE id_equipo = %s", (id_equipo,))
         conexion.commit()
         conexion.close()
+        return True

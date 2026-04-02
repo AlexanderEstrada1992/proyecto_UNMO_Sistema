@@ -3,10 +3,11 @@ from models.asignacion import Asignacion
 
 class AsignacionService:
     @staticmethod
-    def obtener_todas():
+    def obtener_todas(search_query=None):
         """Obtiene todas las asignaciones con los nombres de equipos y usuarios (JOIN)"""
         conexion = obtener_conexion()
         cursor = conexion.cursor()
+        
         query = '''
             SELECT a.id_asignacion, a.id_equipo, a.id_usuario, a.fecha_asignacion, a.observaciones,
                    e.tipo as equipo_tipo, u.nombre as usuario_nombre
@@ -14,7 +15,14 @@ class AsignacionService:
             JOIN equipos e ON a.id_equipo = e.id_equipo
             JOIN usuarios u ON a.id_usuario = u.id_usuario
         '''
-        cursor.execute(query)
+        
+        if search_query:
+            query += " WHERE a.id_equipo LIKE %s OR u.nombre LIKE %s OR e.tipo LIKE %s"
+            like_term = f"%{search_query}%"
+            cursor.execute(query, (like_term, like_term, like_term))
+        else:
+            cursor.execute(query)
+            
         filas = cursor.fetchall()
         conexion.close()
         return filas

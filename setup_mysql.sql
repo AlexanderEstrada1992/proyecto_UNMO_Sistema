@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS equipos (
     id_equipo VARCHAR(50) PRIMARY KEY,
     tipo VARCHAR(100) NOT NULL,
     estado_operativo VARCHAR(50) NOT NULL,
-    disponibilidad VARCHAR(50) NOT NULL
+    disponibilidad VARCHAR(50) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
 );
 
 -- 3. Crear tabla obligatoria de Usuarios (Según Rúbrica)
@@ -17,7 +18,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     mail VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
 );
 
 -- 4. Inserción de un usuario de prueba (Opcional)

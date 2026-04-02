@@ -6,8 +6,19 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Usuarios del Sistema (CRUD MySQL)</h2>
-        <a href="{{ url_for('agregar_usuario') }}" class="btn btn-success fw-bold">+ Nuevo Usuario</a>
+        <div>
+            <a href="{{ url_for('reporte_usuarios') }}" class="btn btn-secondary fw-bold" style="margin-right: 5px;" target="_blank">Generar PDF</a>
+            <a href="{{ url_for('agregar_usuario') }}" class="btn btn-success fw-bold">+ Nuevo Usuario</a>
+        </div>
     </div>
+    
+    <form method="GET" action="{{ url_for('usuarios') }}" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="Buscar usuario por nombre o correo..." value="{{ request.args.get('q', '') }}">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+            <a href="{{ url_for('usuarios') }}" class="btn btn-outline-secondary">Limpiar</a>
+        </div>
+    </form>
     
     <p>Listado de usuarios administrador y personal policial conectado a la base de datos <strong>MySQL</strong>.</p>
     

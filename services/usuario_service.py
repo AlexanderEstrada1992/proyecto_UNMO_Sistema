@@ -4,10 +4,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class UsuarioService:
     @staticmethod
-    def obtener_todos():
+    def obtener_todos(search_query=None):
         conexion = obtener_conexion()
         cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM usuarios")
+        if search_query:
+            query = "SELECT * FROM usuarios WHERE activo = 1 AND (nombre LIKE %s OR mail LIKE %s)"
+            like_term = f"%{search_query}%"
+            cursor.execute(query, (like_term, like_term))
+        else:
+            cursor.execute("SELECT * FROM usuarios WHERE activo = 1")
         filas = cursor.fetchall()
         conexion.close()
         return [Usuario(**fila) for fila in filas] if filas else []
@@ -64,6 +69,16 @@ class UsuarioService:
     def eliminar(id_usuario):
         conexion = obtener_conexion()
         cursor = conexion.cursor()
-        cursor.execute("DELETE FROM usuarios WHERE id_usuario = %s", (id_usuario,))
+        
+        # Validar si tiene asignaciones
+        cursor.execute("SELECT COUNT(*) as count FROM asignaciones WHERE id_usuario = %s", (id_usuario,))
+        resultado = cursor.fetchone()
+        
+        if resultado and resultado['count'] > 0:
+            conexion.close()
+            return False # No se puede eliminar por integridad referencial
+            
+        cursor.execute("UPDATE usuarios SET activo = 0 WHERE id_usuario = %s", (id_usuario,))
         conexion.commit()
         conexion.close()
+        return True

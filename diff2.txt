@@ -1,0 +1,558 @@
+diff --git a/app.py b/app.py
+index d7e2adc..1a08b5e 100644
+--- a/app.py
++++ b/app.py
+@@ -1,6 +1,7 @@
+ import os
+ from flask import Flask, render_template, request, redirect, url_for, flash, make_response
+ from functools import wraps
++from datetime import datetime
+ 
+ # Autenticación con Flask-Login
+ from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+@@ -89,7 +90,8 @@ def logout():
+ @app.route('/equipos')
+ @login_required
+ def equipos():
+-    lista_equipos = EquipoService.obtener_todos()
++    search_query = request.args.get('q')
++    lista_equipos = EquipoService.obtener_todos(search_query)
+     return render_template('equipos/equipos.html', equipos=lista_equipos)
+ 
+ @app.route('/equipos/agregar', methods=['GET', 'POST'])
+@@ -151,14 +153,18 @@ def editar_equipo(id_equipo):
+ @app.route('/equipos/eliminar/<id_equipo>')
+ @login_required
+ def eliminar_equipo(id_equipo):
+-    EquipoService.eliminar(id_equipo)
++    if not EquipoService.eliminar(id_equipo):
++        flash("No se puede eliminar el equipo porque tiene asignaciones activas.", "danger")
++    else:
++        flash("Equipo inactivado exitosamente.", "success")
+     return redirect(url_for('equipos'))
+ 
+ # === CRUD USUARIOS ===
+ @app.route('/usuarios')
+ @login_required
+ def usuarios():
+-    lista_usuarios = UsuarioService.obtener_todos()
++    search_query = request.args.get('q')
++    lista_usuarios = UsuarioService.obtener_todos(search_query)
+     return render_template('usuarios/usuarios.html', usuarios=lista_usuarios)
+ 
+ @app.route('/usuarios/agregar', methods=['GET', 'POST'])
+@@ -198,14 +204,18 @@ def editar_usuario(id_usuario):
+ @app.route('/usuarios/eliminar/<int:id_usuario>')
+ @login_required
+ def eliminar_usuario(id_usuario):
+-    UsuarioService.eliminar(id_usuario)
++    if not UsuarioService.eliminar(id_usuario):
++        flash("No se puede eliminar el usuario porque está vinculado en asignaciones.", "danger")
++    else:
++        flash("Usuario inactivado exitosamente.", "success")
+     return redirect(url_for('usuarios'))
+ 
+ # === CRUD ASIGNACIONES (NUEVO) ===
+ @app.route('/asignaciones')
+ @login_required
+ def asignaciones():
+-    lista_asignaciones = AsignacionService.obtener_todas()
++    search_query = request.args.get('q')
++    lista_asignaciones = AsignacionService.obtener_todas(search_query)
+     return render_template('asignaciones/asignaciones.html', asignaciones=lista_asignaciones)
+ 
+ @app.route('/asignaciones/agregar', methods=['GET', 'POST'])
+@@ -256,9 +266,9 @@ def editar_asignacion(id_asignacion):
+             AsignacionService.actualizar(id_asignacion, asignacion_modificada)
+             return redirect(url_for('asignaciones'))
+         else:
+-            return render_template('formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list, errores=form.errores)
++            return render_template('asignaciones/formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list, errores=form.errores)
+             
+-    return render_template('formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list)
++    return render_template('asignaciones/formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list)
+ 
+ @app.route('/asignaciones/eliminar/<int:id_asignacion>')
+ @login_required
+@@ -267,30 +277,36 @@ def eliminar_asignacion(id_asignacion):
+     return redirect(url_for('asignaciones'))
+ 
+ # === REPORTES PDF ===
++def generar_header_pdf(pdf, title):
++    import os
++    logo_path = os.path.join(app.root_path, 'static', 'img', 'escudo_policia.jpeg')
++    if os.path.exists(logo_path):
++        pdf.image(logo_path, 10, 8, 25)
++    
++    pdf.set_font("Arial", 'B', 15)
++    pdf.cell(0, 10, txt=title, ln=True, align="C")
++    
++    pdf.set_font("Arial", 'I', 10)
++    fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
++    pdf.cell(0, 10, txt=f"Fecha y Hora de Generación: {fecha_hora}", ln=True, align="R")
++    pdf.ln(10)
++
+ @app.route('/reporte_equipos')
+ @login_required
+ def reporte_equipos():
+     from fpdf import FPDF
+-    import sys
+-    
+-    # Creamos el archivo PDF
+     pdf = FPDF()
+     pdf.add_page()
+-    pdf.set_font("Arial", size=12)
+-    
+-    # Título
+-    pdf.cell(200, 10, txt="Reporte General de Equipos Tácticos", ln=True, align="C")
+-    pdf.ln(10)
++    generar_header_pdf(pdf, "Reporte General de Equipos Tácticos")
+     
+     # Encabezados de tabla
+     pdf.set_font("Arial", 'B', 10)
+     pdf.cell(30, 10, "ID", 1)
+     pdf.cell(70, 10, "TIPO", 1)
+     pdf.cell(40, 10, "ESTADO", 1)
+-    pdf.cell(40, 10, "DISPONIBILIDAD", 1)
++    pdf.cell(40, 10, "DISPON.", 1)
+     pdf.ln(10)
+     
+-    # Contenido (Con Service)
+     equipos = EquipoService.obtener_todos()
+     pdf.set_font("Arial", size=10)
+     for eq in equipos:
+@@ -300,14 +316,71 @@ def reporte_equipos():
+         pdf.cell(40, 10, str(eq.disponibilidad), 1)
+         pdf.ln(10)
+         
+-    resultado_pdf = pdf.output(dest="S").encode("latin-1")
+-    
+-    # Crear respuesta para el navegador web
+-    response = make_response(resultado_pdf)
++    response = make_response(pdf.output(dest="S").encode("latin-1"))
+     response.headers['Content-Type'] = 'application/pdf'
+     response.headers['Content-Disposition'] = 'inline; filename=reporte_equipos.pdf'
+     return response
+ 
++@app.route('/reporte_usuarios')
++@login_required
++def reporte_usuarios():
++    from fpdf import FPDF
++    pdf = FPDF()
++    pdf.add_page()
++    generar_header_pdf(pdf, "Reporte General de Usuarios (Perfiles)")
++    
++    pdf.set_font("Arial", 'B', 10)
++    pdf.cell(20, 10, "ID", 1)
++    pdf.cell(70, 10, "NOMBRE", 1)
++    pdf.cell(90, 10, "CORREO", 1)
++    pdf.ln(10)
++    
++    usuarios = UsuarioService.obtener_todos()
++    pdf.set_font("Arial", size=10)
++    for us in usuarios:
++        pdf.cell(20, 10, str(us.id_usuario), 1)
++        pdf.cell(70, 10, str(us.nombre), 1)
++        pdf.cell(90, 10, str(us.mail), 1)
++        pdf.ln(10)
++        
++    response = make_response(pdf.output(dest="S").encode("latin-1"))
++    response.headers['Content-Type'] = 'application/pdf'
++    response.headers['Content-Disposition'] = 'inline; filename=reporte_usuarios.pdf'
++    return response
++
++@app.route('/reporte_asignaciones')
++@login_required
++def reporte_asignaciones():
++    from fpdf import FPDF
++    pdf = FPDF()
++    pdf.add_page("L") # Landscape para que quepan más datos
++    generar_header_pdf(pdf, "Reporte General de Asignaciones")
++    
++    pdf.set_font("Arial", 'B', 10)
++    pdf.cell(15, 10, "ID", 1)
++    pdf.cell(40, 10, "ID EQ/TIPO", 1)
++    pdf.cell(60, 10, "USUARIO", 1)
++    pdf.cell(30, 10, "FECHA", 1)
++    pdf.cell(120, 10, "OBSERVACIONES", 1)
++    pdf.ln(10)
++    
++    asignaciones = AsignacionService.obtener_todas()
++    pdf.set_font("Arial", size=10)
++    for asig in asignaciones:
++        pdf.cell(15, 10, str(asig['id_asignacion']), 1)
++        eq_info = f"{asig['id_equipo']} - {asig['equipo_tipo'][:15]}"
++        pdf.cell(40, 10, str(eq_info), 1)
++        pdf.cell(60, 10, str(asig['usuario_nombre']), 1)
++        fecha = str(asig['fecha_asignacion']) if asig['fecha_asignacion'] else ""
++        pdf.cell(30, 10, fecha, 1)
++        pdf.cell(120, 10, str(asig['observaciones'])[:60] if asig['observaciones'] else "", 1)
++        pdf.ln(10)
++        
++    response = make_response(pdf.output(dest="S").encode("latin-1"))
++    response.headers['Content-Type'] = 'application/pdf'
++    response.headers['Content-Disposition'] = 'inline; filename=reporte_asignaciones.pdf'
++    return response
++
+ # === OTRAS RUTAS ===
+ @app.route('/datos')
+ @login_required
+diff --git a/inventario/data/datos.csv b/inventario/data/datos.csv
+index 1e573cc..855ea64 100644
+--- a/inventario/data/datos.csv
++++ b/inventario/data/datos.csv
+@@ -5,3 +5,14 @@ EQ-003,Chaleco Antibalas Nivel III,Requiere Mantenimiento,En Taller
+ EQ-004,Bastón PR-24 (Tolete),Óptimo,Disponible en Bodega
+ EQ-005,Máscara Antigás,Bueno,Asignado a Patrulla
+ EQ-006,Radio de Comunicación Tetra,Óptimo,Disponible en Bodega
++Chaleco 5.56 - 001,Chalecho antibalas para fusil,Óptimo,Disponible en Bodega
++Chaleco 5.56 - 001,Chalecho antibalas para fusil 5.56,Óptimo,Disponible en Bodega
++007,Pistola eléctrica,Requiere Mantenimiento,En Taller
++007,Pistola eléctrica (spark),Requiere Mantenimiento,En Taller
++EQ-008,Guantes Tácticos,Óptimo,Disponible en Bodega
++007,Pistola eléctrica (spark),Inoperativo,En Taller
++EQ-009,Pistola,Inoperativo,En Taller
++EQ-009,Pistola,Óptimo,Disponible en Bodega
++EQ-002,Casco Táctico con Visor transparente,Óptimo,Disponible en Bodega
++EQ-010,Motocicleta,Requiere Mantenimiento,En Taller
++EQ-010,Motocicleta,Óptimo,Disponible en Bodega
+diff --git a/inventario/data/datos.json b/inventario/data/datos.json
+index 3690423..1675c60 100644
+--- a/inventario/data/datos.json
++++ b/inventario/data/datos.json
+@@ -34,5 +34,71 @@
+         "tipo": "Radio de Comunicación Tetra",
+         "estado_operativo": "Óptimo",
+         "disponibilidad": "Disponible en Bodega"
++    },
++    {
++        "id_equipo": "Chaleco 5.56 - 001",
++        "tipo": "Chalecho antibalas para fusil",
++        "estado_operativo": "Óptimo",
++        "disponibilidad": "Disponible en Bodega"
++    },
++    {
++        "id_equipo": "Chaleco 5.56 - 001",
++        "tipo": "Chalecho antibalas para fusil 5.56",
++        "estado_operativo": "Óptimo",
++        "disponibilidad": "Disponible en Bodega"
++    },
++    {
++        "id_equipo": "007",
++        "tipo": "Pistola eléctrica",
++        "estado_operativo": "Requiere Mantenimiento",
++        "disponibilidad": "En Taller"
++    },
++    {
++        "id_equipo": "007",
++        "tipo": "Pistola eléctrica (spark)",
++        "estado_operativo": "Requiere Mantenimiento",
++        "disponibilidad": "En Taller"
++    },
++    {
++        "id_equipo": "EQ-008",
++        "tipo": "Guantes Tácticos",
++        "estado_operativo": "Óptimo",
++        "disponibilidad": "Disponible en Bodega"
++    },
++    {
++        "id_equipo": "007",
++        "tipo": "Pistola eléctrica (spark)",
++        "estado_operativo": "Inoperativo",
++        "disponibilidad": "En Taller"
++    },
++    {
++        "id_equipo": "EQ-009",
++        "tipo": "Pistola",
++        "estado_operativo": "Inoperativo",
++        "disponibilidad": "En Taller"
++    },
++    {
++        "id_equipo": "EQ-009",
++        "tipo": "Pistola",
++        "estado_operativo": "Óptimo",
++        "disponibilidad": "Disponible en Bodega"
++    },
++    {
++        "id_equipo": "EQ-002",
++        "tipo": "Casco Táctico con Visor transparente",
++        "estado_operativo": "Óptimo",
++        "disponibilidad": "Disponible en Bodega"
++    },
++    {
++        "id_equipo": "EQ-010",
++        "tipo": "Motocicleta",
++        "estado_operativo": "Requiere Mantenimiento",
++        "disponibilidad": "En Taller"
++    },
++    {
++        "id_equipo": "EQ-010",
++        "tipo": "Motocicleta",
++        "estado_operativo": "Óptimo",
++        "disponibilidad": "Disponible en Bodega"
+     }
+ ]
+\ No newline at end of file
+diff --git a/inventario/data/datos.txt b/inventario/data/datos.txt
+index faf7f3d..853624b 100644
+--- a/inventario/data/datos.txt
++++ b/inventario/data/datos.txt
+@@ -4,3 +4,14 @@ EQ-003 | Chaleco Antibalas Nivel III | Requiere Mantenimiento | En Taller
+ EQ-004 | Bastón PR-24 (Tolete) | Óptimo | Disponible en Bodega
+ EQ-005 | Máscara Antigás | Bueno | Asignado a Patrulla
+ EQ-006 | Radio de Comunicación Tetra | Óptimo | Disponible en Bodega
++Chaleco 5.56 - 001 | Chalecho antibalas para fusil | Óptimo | Disponible en Bodega
++Chaleco 5.56 - 001 | Chalecho antibalas para fusil 5.56 | Óptimo | Disponible en Bodega
++007 | Pistola eléctrica | Requiere Mantenimiento | En Taller
++007 | Pistola eléctrica (spark) | Requiere Mantenimiento | En Taller
++EQ-008 | Guantes Tácticos | Óptimo | Disponible en Bodega
++007 | Pistola eléctrica (spark) | Inoperativo | En Taller
++EQ-009 | Pistola | Inoperativo | En Taller
++EQ-009 | Pistola | Óptimo | Disponible en Bodega
++EQ-002 | Casco Táctico con Visor transparente | Óptimo | Disponible en Bodega
++EQ-010 | Motocicleta | Requiere Mantenimiento | En Taller
++EQ-010 | Motocicleta | Óptimo | Disponible en Bodega
+diff --git a/models/equipo.py b/models/equipo.py
+index e4b5dd9..0e9a77d 100644
+--- a/models/equipo.py
++++ b/models/equipo.py
+@@ -1,6 +1,7 @@
+ class Equipo:
+-    def __init__(self, id_equipo, tipo, estado_operativo, disponibilidad):
++    def __init__(self, id_equipo, tipo, estado_operativo, disponibilidad, activo=True):
+         self.id_equipo = id_equipo
+         self.tipo = tipo
+         self.estado_operativo = estado_operativo
+         self.disponibilidad = disponibilidad
++        self.activo = activo
+diff --git a/models/usuario.py b/models/usuario.py
+index 533f3ba..5bf03db 100644
+--- a/models/usuario.py
++++ b/models/usuario.py
+@@ -1,9 +1,10 @@
+ from flask_login import UserMixin
+ 
+ class Usuario(UserMixin):
+-    def __init__(self, id_usuario, nombre, mail, password):
++    def __init__(self, id_usuario, nombre, mail, password, activo=True):
+         self.id = str(id_usuario)  # Necesario para Flask-Login
+         self.id_usuario = id_usuario
+         self.nombre = nombre
+         self.mail = mail
+         self.password = password
++        self.activo = activo
+diff --git a/services/asignacion_service.py b/services/asignacion_service.py
+index e38641b..e2d949f 100644
+--- a/services/asignacion_service.py
++++ b/services/asignacion_service.py
+@@ -3,10 +3,11 @@ from models.asignacion import Asignacion
+ 
+ class AsignacionService:
+     @staticmethod
+-    def obtener_todas():
++    def obtener_todas(search_query=None):
+         """Obtiene todas las asignaciones con los nombres de equipos y usuarios (JOIN)"""
+         conexion = obtener_conexion()
+         cursor = conexion.cursor()
++        
+         query = '''
+             SELECT a.id_asignacion, a.id_equipo, a.id_usuario, a.fecha_asignacion, a.observaciones,
+                    e.tipo as equipo_tipo, u.nombre as usuario_nombre
+@@ -14,7 +15,14 @@ class AsignacionService:
+             JOIN equipos e ON a.id_equipo = e.id_equipo
+             JOIN usuarios u ON a.id_usuario = u.id_usuario
+         '''
+-        cursor.execute(query)
++        
++        if search_query:
++            query += " WHERE a.id_equipo LIKE %s OR u.nombre LIKE %s OR e.tipo LIKE %s"
++            like_term = f"%{search_query}%"
++            cursor.execute(query, (like_term, like_term, like_term))
++        else:
++            cursor.execute(query)
++            
+         filas = cursor.fetchall()
+         conexion.close()
+         return filas
+diff --git a/services/equipo_service.py b/services/equipo_service.py
+index d01930e..93e095d 100644
+--- a/services/equipo_service.py
++++ b/services/equipo_service.py
+@@ -3,10 +3,15 @@ from models.equipo import Equipo
+ 
+ class EquipoService:
+     @staticmethod
+-    def obtener_todos():
++    def obtener_todos(search_query=None):
+         conexion = obtener_conexion()
+         cursor = conexion.cursor()
+-        cursor.execute("SELECT * FROM equipos")
++        if search_query:
++            query = "SELECT * FROM equipos WHERE activo = 1 AND (id_equipo LIKE %s OR tipo LIKE %s)"
++            like_term = f"%{search_query}%"
++            cursor.execute(query, (like_term, like_term))
++        else:
++            cursor.execute("SELECT * FROM equipos WHERE activo = 1")
+         filas = cursor.fetchall()
+         conexion.close()
+         return [Equipo(**fila) for fila in filas] if filas else []
+@@ -46,6 +51,16 @@ class EquipoService:
+     def eliminar(id_equipo):
+         conexion = obtener_conexion()
+         cursor = conexion.cursor()
+-        cursor.execute("DELETE FROM equipos WHERE id_equipo = %s", (id_equipo,))
++        
++        # Validar si tiene asignaciones
++        cursor.execute("SELECT COUNT(*) as count FROM asignaciones WHERE id_equipo = %s", (id_equipo,))
++        resultado = cursor.fetchone()
++        
++        if resultado and resultado['count'] > 0:
++            conexion.close()
++            return False # No se puede eliminar por integridad referencial
++            
++        cursor.execute("UPDATE equipos SET activo = 0 WHERE id_equipo = %s", (id_equipo,))
+         conexion.commit()
+         conexion.close()
++        return True
+diff --git a/services/usuario_service.py b/services/usuario_service.py
+index e135076..7b6be97 100644
+--- a/services/usuario_service.py
++++ b/services/usuario_service.py
+@@ -4,10 +4,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
+ 
+ class UsuarioService:
+     @staticmethod
+-    def obtener_todos():
++    def obtener_todos(search_query=None):
+         conexion = obtener_conexion()
+         cursor = conexion.cursor()
+-        cursor.execute("SELECT * FROM usuarios")
++        if search_query:
++            query = "SELECT * FROM usuarios WHERE activo = 1 AND (nombre LIKE %s OR mail LIKE %s)"
++            like_term = f"%{search_query}%"
++            cursor.execute(query, (like_term, like_term))
++        else:
++            cursor.execute("SELECT * FROM usuarios WHERE activo = 1")
+         filas = cursor.fetchall()
+         conexion.close()
+         return [Usuario(**fila) for fila in filas] if filas else []
+@@ -64,6 +69,16 @@ class UsuarioService:
+     def eliminar(id_usuario):
+         conexion = obtener_conexion()
+         cursor = conexion.cursor()
+-        cursor.execute("DELETE FROM usuarios WHERE id_usuario = %s", (id_usuario,))
++        
++        # Validar si tiene asignaciones
++        cursor.execute("SELECT COUNT(*) as count FROM asignaciones WHERE id_usuario = %s", (id_usuario,))
++        resultado = cursor.fetchone()
++        
++        if resultado and resultado['count'] > 0:
++            conexion.close()
++            return False # No se puede eliminar por integridad referencial
++            
++        cursor.execute("UPDATE usuarios SET activo = 0 WHERE id_usuario = %s", (id_usuario,))
+         conexion.commit()
+         conexion.close()
++        return True
+diff --git a/setup_mysql.sql b/setup_mysql.sql
+index 4cc00f1..1db7c8a 100644
+--- a/setup_mysql.sql
++++ b/setup_mysql.sql
+@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS equipos (
+     id_equipo VARCHAR(50) PRIMARY KEY,
+     tipo VARCHAR(100) NOT NULL,
+     estado_operativo VARCHAR(50) NOT NULL,
+-    disponibilidad VARCHAR(50) NOT NULL
++    disponibilidad VARCHAR(50) NOT NULL,
++    activo BOOLEAN DEFAULT TRUE
+ );
+ 
+ -- 3. Crear tabla obligatoria de Usuarios (Según Rúbrica)
+@@ -17,7 +18,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
+     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+     nombre VARCHAR(100) NOT NULL,
+     mail VARCHAR(100) NOT NULL UNIQUE,
+-    password VARCHAR(255) NOT NULL
++    password VARCHAR(255) NOT NULL,
++    activo BOOLEAN DEFAULT TRUE
+ );
+ 
+ -- 4. Inserción de un usuario de prueba (Opcional)
+diff --git a/templates/asignaciones/asignaciones.html b/templates/asignaciones/asignaciones.html
+index 11d664b..7154fb1 100644
+--- a/templates/asignaciones/asignaciones.html
++++ b/templates/asignaciones/asignaciones.html
+@@ -6,9 +6,20 @@
+ <div class="container mt-5">
+     <div class="d-flex justify-content-between align-items-center mb-4">
+         <h2>Listado de Asignaciones</h2>
+-        <a href="{{ url_for('agregar_asignacion') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Nueva Asignación</a>
++        <div>
++            <a href="{{ url_for('reporte_asignaciones') }}" class="btn btn-secondary" style="margin-right: 5px;" target="_blank">Generar PDF</a>
++            <a href="{{ url_for('agregar_asignacion') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Nueva Asignación</a>
++        </div>
+     </div>
+ 
++    <form method="GET" action="{{ url_for('asignaciones') }}" class="mb-3">
++        <div class="input-group">
++            <input type="text" name="q" class="form-control" placeholder="Buscar por equipo o usuario..." value="{{ request.args.get('q', '') }}">
++            <button class="btn btn-primary" type="submit">Buscar</button>
++            <a href="{{ url_for('asignaciones') }}" class="btn btn-outline-secondary">Limpiar</a>
++        </div>
++    </form>
++
+     <div class="card shadow-sm">
+         <div class="card-body p-0">
+             <table class="table table-striped table-hover m-0">
+diff --git a/templates/equipos/equipos.html b/templates/equipos/equipos.html
+index 320bd9a..68cbdf6 100644
+--- a/templates/equipos/equipos.html
++++ b/templates/equipos/equipos.html
+@@ -6,9 +6,20 @@
+ <div class="container">
+     <div class="d-flex justify-content-between align-items-center mb-4">
+         <h2>Inventario de Equipos Tácticos</h2>
+-        <a href="{{ url_for('agregar_equipo') }}" class="btn btn-success fw-bold">+ Nuevo Equipo</a>
++        <div>
++            <a href="{{ url_for('reporte_equipos') }}" class="btn btn-secondary fw-bold" style="margin-right: 5px;" target="_blank">Generar PDF</a>
++            <a href="{{ url_for('agregar_equipo') }}" class="btn btn-success fw-bold">+ Nuevo Equipo</a>
++        </div>
+     </div>
+     
++    <form method="GET" action="{{ url_for('equipos') }}" class="mb-3">
++        <div class="input-group">
++            <input type="text" name="q" class="form-control" placeholder="Buscar equipo por ID o Tipo..." value="{{ request.args.get('q', '') }}">
++            <button class="btn btn-primary" type="submit">Buscar</button>
++            <a href="{{ url_for('equipos') }}" class="btn btn-outline-secondary">Limpiar</a>
++        </div>
++    </form>
++    
+     <p>Listado de equipos tácticos registrados gestionados a través de SQLite y Diccionarios (Colecciones POO).</p>
+     
+     {% if equipos|length == 0 %}
+diff --git a/templates/usuarios/usuarios.html b/templates/usuarios/usuarios.html
+index c0da20a..18399af 100644
+--- a/templates/usuarios/usuarios.html
++++ b/templates/usuarios/usuarios.html
+@@ -6,9 +6,20 @@
+ <div class="container">
+     <div class="d-flex justify-content-between align-items-center mb-4">
+         <h2>Usuarios del Sistema (CRUD MySQL)</h2>
+-        <a href="{{ url_for('agregar_usuario') }}" class="btn btn-success fw-bold">+ Nuevo Usuario</a>
++        <div>
++            <a href="{{ url_for('reporte_usuarios') }}" class="btn btn-secondary fw-bold" style="margin-right: 5px;" target="_blank">Generar PDF</a>
++            <a href="{{ url_for('agregar_usuario') }}" class="btn btn-success fw-bold">+ Nuevo Usuario</a>
++        </div>
+     </div>
+     
++    <form method="GET" action="{{ url_for('usuarios') }}" class="mb-3">
++        <div class="input-group">
++            <input type="text" name="q" class="form-control" placeholder="Buscar usuario por nombre o correo..." value="{{ request.args.get('q', '') }}">
++            <button class="btn btn-primary" type="submit">Buscar</button>
++            <a href="{{ url_for('usuarios') }}" class="btn btn-outline-secondary">Limpiar</a>
++        </div>
++    </form>
++    
+     <p>Listado de usuarios administrador y personal policial conectado a la base de datos <strong>MySQL</strong>.</p>
+     
+     {% if usuarios|length == 0 %}

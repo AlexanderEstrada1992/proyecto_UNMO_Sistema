@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from functools import wraps
+from datetime import datetime
 
 # Autenticación con Flask-Login
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -89,7 +90,8 @@ def logout():
 @app.route('/equipos')
 @login_required
 def equipos():
-    lista_equipos = EquipoService.obtener_todos()
+    search_query = request.args.get('q')
+    lista_equipos = EquipoService.obtener_todos(search_query)
     return render_template('equipos/equipos.html', equipos=lista_equipos)
 
 @app.route('/equipos/agregar', methods=['GET', 'POST'])
@@ -151,14 +153,18 @@ def editar_equipo(id_equipo):
 @app.route('/equipos/eliminar/<id_equipo>')
 @login_required
 def eliminar_equipo(id_equipo):
-    EquipoService.eliminar(id_equipo)
+    if not EquipoService.eliminar(id_equipo):
+        flash("No se puede eliminar el equipo porque tiene asignaciones activas.", "danger")
+    else:
+        flash("Equipo inactivado exitosamente.", "success")
     return redirect(url_for('equipos'))
 
 # === CRUD USUARIOS ===
 @app.route('/usuarios')
 @login_required
 def usuarios():
-    lista_usuarios = UsuarioService.obtener_todos()
+    search_query = request.args.get('q')
+    lista_usuarios = UsuarioService.obtener_todos(search_query)
     return render_template('usuarios/usuarios.html', usuarios=lista_usuarios)
 
 @app.route('/usuarios/agregar', methods=['GET', 'POST'])
@@ -198,14 +204,18 @@ def editar_usuario(id_usuario):
 @app.route('/usuarios/eliminar/<int:id_usuario>')
 @login_required
 def eliminar_usuario(id_usuario):
-    UsuarioService.eliminar(id_usuario)
+    if not UsuarioService.eliminar(id_usuario):
+        flash("No se puede eliminar el usuario porque está vinculado en asignaciones.", "danger")
+    else:
+        flash("Usuario inactivado exitosamente.", "success")
     return redirect(url_for('usuarios'))
 
 # === CRUD ASIGNACIONES (NUEVO) ===
 @app.route('/asignaciones')
 @login_required
 def asignaciones():
-    lista_asignaciones = AsignacionService.obtener_todas()
+    search_query = request.args.get('q')
+    lista_asignaciones = AsignacionService.obtener_todas(search_query)
     return render_template('asignaciones/asignaciones.html', asignaciones=lista_asignaciones)
 
 @app.route('/asignaciones/agregar', methods=['GET', 'POST'])
@@ -256,9 +266,9 @@ def editar_asignacion(id_asignacion):
             AsignacionService.actualizar(id_asignacion, asignacion_modificada)
             return redirect(url_for('asignaciones'))
         else:
-            return render_template('formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list, errores=form.errores)
+            return render_template('asignaciones/formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list, errores=form.errores)
             
-    return render_template('formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list)
+    return render_template('asignaciones/formulario_asignacion.html', asignacion=asignacion_actual, equipos=equipos, usuarios=usuarios_list)
 
 @app.route('/asignaciones/eliminar/<int:id_asignacion>')
 @login_required
@@ -267,30 +277,36 @@ def eliminar_asignacion(id_asignacion):
     return redirect(url_for('asignaciones'))
 
 # === REPORTES PDF ===
+def generar_header_pdf(pdf, title):
+    import os
+    logo_path = os.path.join(app.root_path, 'static', 'img', 'escudo_policia.jpeg')
+    if os.path.exists(logo_path):
+        pdf.image(logo_path, 10, 8, 25)
+    
+    pdf.set_font("Arial", 'B', 15)
+    pdf.cell(0, 10, txt=title, ln=True, align="C")
+    
+    pdf.set_font("Arial", 'I', 10)
+    fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pdf.cell(0, 10, txt=f"Fecha y Hora de Generación: {fecha_hora}", ln=True, align="R")
+    pdf.ln(10)
+
 @app.route('/reporte_equipos')
 @login_required
 def reporte_equipos():
     from fpdf import FPDF
-    import sys
-    
-    # Creamos el archivo PDF
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    
-    # Título
-    pdf.cell(200, 10, txt="Reporte General de Equipos Tácticos", ln=True, align="C")
-    pdf.ln(10)
+    generar_header_pdf(pdf, "Reporte General de Equipos Tácticos")
     
     # Encabezados de tabla
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(30, 10, "ID", 1)
     pdf.cell(70, 10, "TIPO", 1)
     pdf.cell(40, 10, "ESTADO", 1)
-    pdf.cell(40, 10, "DISPONIBILIDAD", 1)
+    pdf.cell(40, 10, "DISPON.", 1)
     pdf.ln(10)
     
-    # Contenido (Con Service)
     equipos = EquipoService.obtener_todos()
     pdf.set_font("Arial", size=10)
     for eq in equipos:
@@ -300,12 +316,69 @@ def reporte_equipos():
         pdf.cell(40, 10, str(eq.disponibilidad), 1)
         pdf.ln(10)
         
-    resultado_pdf = pdf.output(dest="S").encode("latin-1")
-    
-    # Crear respuesta para el navegador web
-    response = make_response(resultado_pdf)
+    response = make_response(pdf.output(dest="S").encode("latin-1"))
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=reporte_equipos.pdf'
+    return response
+
+@app.route('/reporte_usuarios')
+@login_required
+def reporte_usuarios():
+    from fpdf import FPDF
+    pdf = FPDF()
+    pdf.add_page()
+    generar_header_pdf(pdf, "Reporte General de Usuarios (Perfiles)")
+    
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(20, 10, "ID", 1)
+    pdf.cell(70, 10, "NOMBRE", 1)
+    pdf.cell(90, 10, "CORREO", 1)
+    pdf.ln(10)
+    
+    usuarios = UsuarioService.obtener_todos()
+    pdf.set_font("Arial", size=10)
+    for us in usuarios:
+        pdf.cell(20, 10, str(us.id_usuario), 1)
+        pdf.cell(70, 10, str(us.nombre), 1)
+        pdf.cell(90, 10, str(us.mail), 1)
+        pdf.ln(10)
+        
+    response = make_response(pdf.output(dest="S").encode("latin-1"))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=reporte_usuarios.pdf'
+    return response
+
+@app.route('/reporte_asignaciones')
+@login_required
+def reporte_asignaciones():
+    from fpdf import FPDF
+    pdf = FPDF()
+    pdf.add_page("L") # Landscape para que quepan más datos
+    generar_header_pdf(pdf, "Reporte General de Asignaciones")
+    
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(15, 10, "ID", 1)
+    pdf.cell(40, 10, "ID EQ/TIPO", 1)
+    pdf.cell(60, 10, "USUARIO", 1)
+    pdf.cell(30, 10, "FECHA", 1)
+    pdf.cell(120, 10, "OBSERVACIONES", 1)
+    pdf.ln(10)
+    
+    asignaciones = AsignacionService.obtener_todas()
+    pdf.set_font("Arial", size=10)
+    for asig in asignaciones:
+        pdf.cell(15, 10, str(asig['id_asignacion']), 1)
+        eq_info = f"{asig['id_equipo']} - {asig['equipo_tipo'][:15]}"
+        pdf.cell(40, 10, str(eq_info), 1)
+        pdf.cell(60, 10, str(asig['usuario_nombre']), 1)
+        fecha = str(asig['fecha_asignacion']) if asig['fecha_asignacion'] else ""
+        pdf.cell(30, 10, fecha, 1)
+        pdf.cell(120, 10, str(asig['observaciones'])[:60] if asig['observaciones'] else "", 1)
+        pdf.ln(10)
+        
+    response = make_response(pdf.output(dest="S").encode("latin-1"))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=reporte_asignaciones.pdf'
     return response
 
 # === OTRAS RUTAS ===
